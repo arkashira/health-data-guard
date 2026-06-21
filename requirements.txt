@@ -1,1 +1,1 @@
-# No third-party dependencies required
+# No dependencies required

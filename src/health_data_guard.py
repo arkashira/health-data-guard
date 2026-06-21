@@ -1,29 +1,45 @@
+import argparse
 import json
 from dataclasses import dataclass
-from typing import Dict
+from enum import Enum
+
+class PolicyStatus(Enum):
+    LOADED = 1
+    NOT_LOADED = 2
 
 @dataclass
-class EncryptedData:
-    data: str
-    key: str
+class Policy:
+    name: str
+    status: PolicyStatus
 
 class HealthDataGuard:
     def __init__(self):
-        self.compliance_regulations = {
-            "state1": "regulation1",
-            "state2": "regulation2"
-        }
+        self.policies = {}
 
-    def encrypt_data(self, data: str, key: str) -> EncryptedData:
-        encrypted_data = json.dumps({"data": data, "key": key})
-        return EncryptedData(encrypted_data, key)
+    def load_policy(self, name: str):
+        self.policies[name] = Policy(name, PolicyStatus.LOADED)
 
-    def verify_compliance(self, state: str) -> bool:
-        return state in self.compliance_regulations
+    def enforce_policy(self, name: str):
+        if name in self.policies:
+            return self.policies[name].status == PolicyStatus.LOADED
+        return False
 
-    def decrypt_data(self, encrypted_data: EncryptedData) -> str:
-        try:
-            decrypted_data = json.loads(encrypted_data.data)
-            return decrypted_data["data"]
-        except json.JSONDecodeError:
-            raise ValueError("Invalid JSON")
+    def health_check(self):
+        return all(policy.status == PolicyStatus.LOADED for policy in self.policies.values())
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--load-policy', help='Load a policy')
+    args = parser.parse_args()
+
+    guard = HealthDataGuard()
+    if args.load_policy:
+        guard.load_policy(args.load_policy)
+
+    if guard.health_check():
+        print('OK')
+    else:
+        print('NOT OK')
+
+if __name__ == '__main__':
+    main()

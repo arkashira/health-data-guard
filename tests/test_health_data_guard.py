@@ -1,34 +1,28 @@
-import json
-from health_data_guard import HealthDataGuard, EncryptedData
+import pytest
+from health_data_guard import HealthDataGuard, PolicyStatus
 
-def test_encrypt_data():
-    health_data_guard = HealthDataGuard()
-    data = "sensitive_data"
-    key = "secret_key"
-    encrypted_data = health_data_guard.encrypt_data(data, key)
-    assert encrypted_data.data == json.dumps({"data": data, "key": key})
-    assert encrypted_data.key == key
+def test_load_policy():
+    guard = HealthDataGuard()
+    guard.load_policy('test_policy')
+    assert 'test_policy' in guard.policies
 
-def test_verify_compliance():
-    health_data_guard = HealthDataGuard()
-    state = "state1"
-    assert health_data_guard.verify_compliance(state) == True
-    state = "unknown_state"
-    assert health_data_guard.verify_compliance(state) == False
+def test_enforce_policy_loaded():
+    guard = HealthDataGuard()
+    guard.load_policy('test_policy')
+    assert guard.enforce_policy('test_policy')
 
-def test_decrypt_data():
-    health_data_guard = HealthDataGuard()
-    data = "sensitive_data"
-    key = "secret_key"
-    encrypted_data = health_data_guard.encrypt_data(data, key)
-    decrypted_data = health_data_guard.decrypt_data(encrypted_data)
-    assert decrypted_data == data
+def test_enforce_policy_not_loaded():
+    guard = HealthDataGuard()
+    assert not guard.enforce_policy('test_policy')
 
-def test_decrypt_data_invalid_json():
-    health_data_guard = HealthDataGuard()
-    encrypted_data = EncryptedData("invalid_json", "key")
-    try:
-        health_data_guard.decrypt_data(encrypted_data)
-        assert False, "Expected ValueError"
-    except ValueError:
-        assert True
+def test_health_check_all_loaded():
+    guard = HealthDataGuard()
+    guard.load_policy('test_policy1')
+    guard.load_policy('test_policy2')
+    assert guard.health_check()
+
+def test_health_check_not_all_loaded():
+    guard = HealthDataGuard()
+    guard.load_policy('test_policy1')
+    guard.policies['test_policy1'].status = PolicyStatus.NOT_LOADED
+    assert not guard.health_check()
