@@ -1,28 +1,34 @@
 import pytest
-from health_data_guard import HealthDataGuard, PolicyStatus
+from health_data_guard import HealthDataGuard, AuditLog, UserRole
 
-def test_load_policy():
+def test_export_audit_logs_csv():
     guard = HealthDataGuard()
-    guard.load_policy('test_policy')
-    assert 'test_policy' in guard.policies
+    guard.add_user_role("user1", UserRole.COMPLIANCE_OFFICER)
+    guard.add_audit_log(AuditLog("2022-01-01 12:00:00", "policy1", "data_source1", "action_taken1"))
+    csv_data = guard.export_audit_logs("user1", "csv")
+    assert csv_data == "timestamp,policy_id,data_source,action_taken\n2022-01-01 12:00:00,policy1,data_source1,action_taken1\n"
 
-def test_enforce_policy_loaded():
+def test_export_audit_logs_json():
     guard = HealthDataGuard()
-    guard.load_policy('test_policy')
-    assert guard.enforce_policy('test_policy')
+    guard.add_user_role("user1", UserRole.COMPLIANCE_OFFICER)
+    guard.add_audit_log(AuditLog("2022-01-01 12:00:00", "policy1", "data_source1", "action_taken1"))
+    json_data = guard.export_audit_logs("user1", "json")
+    assert json_data == '[\n    {\n        "timestamp": "2022-01-01 12:00:00",\n        "policy_id": "policy1",\n        "data_source": "data_source1",\n        "action_taken": "action_taken1"\n    }\n]'
 
-def test_enforce_policy_not_loaded():
+def test_export_audit_logs_invalid_format():
     guard = HealthDataGuard()
-    assert not guard.enforce_policy('test_policy')
+    guard.add_user_role("user1", UserRole.COMPLIANCE_OFFICER)
+    with pytest.raises(ValueError):
+        guard.export_audit_logs("user1", "invalid_format")
 
-def test_health_check_all_loaded():
+def test_export_audit_logs_permission_denied():
     guard = HealthDataGuard()
-    guard.load_policy('test_policy1')
-    guard.load_policy('test_policy2')
-    assert guard.health_check()
+    guard.add_user_role("user1", UserRole.ADMIN)
+    with pytest.raises(PermissionError):
+        guard.export_audit_logs("user1", "csv")
 
-def test_health_check_not_all_loaded():
+def test_get_audit_logs_permission_denied():
     guard = HealthDataGuard()
-    guard.load_policy('test_policy1')
-    guard.policies['test_policy1'].status = PolicyStatus.NOT_LOADED
-    assert not guard.health_check()
+    guard.add_user_role("user1", UserRole.ADMIN)
+    with pytest.raises(PermissionError):
+        guard.get_audit_logs("user1")

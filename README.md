@@ -1,7 +1,7 @@
 # Health Data Guard
 
-A runtime integration layer for health data.
+A Python project for managing and exporting audit logs.
 
-## Usage
+## Installation
 
-Load a policy:
+To install the project, run the following command:
