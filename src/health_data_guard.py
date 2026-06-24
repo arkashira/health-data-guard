@@ -1,39 +1,33 @@
-import argparse
-import sys
+import json
 from dataclasses import dataclass
+from enum import Enum
+from typing import List
+
+class PolicyStatus(Enum):
+    LOADED = 1
+    NOT_LOADED = 2
 
 @dataclass
 class Policy:
+    id: int
     name: str
-    url: str
+    status: PolicyStatus
 
-def build_docker_image(version: str) -> str:
-    """Builds a Docker image with the runtime binary."""
-    return f"health-data-guard:{version}"
+class HealthDataGuard:
+    def __init__(self):
+        self.policies = []
 
-def deploy_to_kubernetes(policy_store_url: str, image: str) -> str:
-    """Deploys the image to a Kubernetes cluster with a configurable policy store URL."""
-    return f"Deployed {image} to Kubernetes with policy store URL: {policy_store_url}"
+    def load_policies(self, policies: List[Policy]):
+        self.policies = policies
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Health Data Guard")
-    parser.add_argument(
-        "--version",
-        required=True,
-        help="Version of the Docker image",
-    )
-    parser.add_argument(
-        "--policy-store-url",
-        required=True,
-        help="URL of the policy store",
-    )
-    args = parser.parse_args()
+    def enforce_policy(self, policy_id: int):
+        for policy in self.policies:
+            if policy.id == policy_id:
+                return policy.status == PolicyStatus.LOADED
+        return False
 
-    image = build_docker_image(args.version)
-    deploy_to_kubernetes(args.policy_store_url, image)
+    def health_check(self):
+        return all(policy.status == PolicyStatus.LOADED for policy in self.policies)
 
-    # Successful execution should exit with code 0
-    sys.exit(0)
-
-if __name__ == "__main__":
-    main()
+    def get_policies(self):
+        return self.policies
