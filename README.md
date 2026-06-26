@@ -1,9 +1,5 @@
-# Health Data Guard
-
-A Python project for managing health data policies.
+# Compliance Engine
+A Python project for validating data ingestion against HIPAA rules.
 
 ## Usage
-
-1. Install the project using `poetry install`.
-2. Run the tests using `pytest`.
-3. Use the `HealthDataGuard` class to manage policies.
+Run the compliance engine using the following command:
